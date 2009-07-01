@@ -8,6 +8,7 @@
     <ProjectGuid>{DB6AB0DF-DE7D-4A51-9953-9D33FD596B0A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <AssemblyName>obs-factory-status</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -18,19 +19,17 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>true</Externalconsole>
-    <AssemblyName>moblin-factory-status</AssemblyName>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="OpenSuse.BuildService\" />
-    <Folder Include="MoblinTree\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="OpenSuse.BuildService\Account.cs" />
     <Compile Include="OpenSuse.BuildService\AccountCollection.cs" />
     <Compile Include="OpenSuse.BuildService\ApiRequest.cs" />
-    <Compile Include="MoblinTree\TreeStatus.cs" />
     <Compile Include="OpenSuse.BuildService\OscRcAccountCollection.cs" />
+    <Compile Include="OpenSuse.BuildService.Tools\FactoryStatus.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

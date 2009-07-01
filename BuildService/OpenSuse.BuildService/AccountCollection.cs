@@ -47,6 +47,10 @@ namespace OpenSuse.BuildService
             get { return (Account)accounts[index]; }
         }
         
+        public Account this[string apiUrl] {
+            get { return (Account)accounts[apiUrl]; }
+        }
+        
         public void Add (Account account)
         {
             accounts.Add (account.ApiUrl, account);

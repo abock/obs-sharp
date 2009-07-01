@@ -12,5 +12,5 @@ clean:
 	rm -f $(ASSEMBLY){,.mdb}
 
 run: $(ASSEMBLY)
-	@mono --debug $<
+	@mono --debug $< Moblin:UI Moblin:Base Moblin:Factory
 

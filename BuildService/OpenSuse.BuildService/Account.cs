@@ -34,6 +34,11 @@ namespace OpenSuse.BuildService
         public string Username { get; set; }
         public string Password { get; set; }
         
+        private ApiRequest api_request;
+        public ApiRequest ApiRequest {
+            get { return api_request ?? (api_request = new ApiRequest () { Account = this }); }
+        }
+        
         public override string ToString ()
         {
            return String.Format ("[{0}] user = {1}, pass = {2}", ApiUrl, Username, Password);

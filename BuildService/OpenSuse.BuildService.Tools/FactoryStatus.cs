@@ -1,5 +1,5 @@
 // 
-// TreeStatus.cs
+// FactoryStatus.cs
 //  
 // Author:
 //   Aaron Bockover <abockover@novell.com>
@@ -33,24 +33,28 @@ using System.Collections.Generic;
 
 using OpenSuse.BuildService;
 
-namespace MoblinTree
+namespace OpenSuse.BuildService.Tools
 {
-    public static class TreeStatus
+    public static class FactoryStatus
     {
         private class Package
         {
             public string Project { get; set; }
             public string Name { get; set; }
             public string SrcMd5 { get; set; }
+            public Account Account { get; set; }
         }
+        
+        private static OscRcAccountCollection accounts;
     
-        private static ApiRequest api;
-    
-        public static void Main ()
+        public static void Main (string [] args)
         {
-            api = new ApiRequest () {
-                Account = new OscRcAccountCollection ().DefaultAccount
-            };
+            if (args.Length < 2) {
+                Console.Error.WriteLine ("factory-status: [https://API_URL/]DEVEL_PROJECTS [https://API_URL/]FACTORY_PROJECT");
+                return;
+            }
+
+            accounts = new OscRcAccountCollection ();
             
             Console.Error.Write ("\r");
             Console.Write ("Loading revision data... ");
@@ -58,8 +62,11 @@ namespace MoblinTree
             var devel_packages = new Dictionary<string, Package> ();
             var factory_packages = new Dictionary<string, Package> ();
             
-            LoadPackages (devel_packages, "Moblin:Base", "Moblin:UI");
-            LoadPackages (factory_packages, "Moblin:Factory");
+            for (int i = 0; i < args.Length - 1; i++) {
+                LoadPackages (devel_packages, args[i]);
+            }
+
+            LoadPackages (factory_packages, args[args.Length - 1]);
             
             int total_count = devel_packages.Count + factory_packages.Count;
             int completed_count = 0;
@@ -76,7 +83,7 @@ namespace MoblinTree
             var to_update = new List<Package> ();
             var to_remove = new List<Package> ();
             
-            // Find packages that are not up-to-date in Moblin:Factory
+            // Find packages that are not up-to-date
             foreach (var package in devel_packages.Values) {
                 if (!factory_packages.ContainsKey (package.Name) || 
                     factory_packages[package.Name].SrcMd5 != package.SrcMd5) {
@@ -89,7 +96,7 @@ namespace MoblinTree
                     ? a.Name.CompareTo (b.Name)
                     : a.Project.CompareTo (b.Project));
             
-            // Find packages that are obsolete in Moblin:Factory
+            // Find packages that are obsolete
             foreach (var package in factory_packages.Values) {
                 if (!devel_packages.ContainsKey (package.Name)) {
                     to_remove.Add (package);
@@ -106,38 +113,44 @@ namespace MoblinTree
             }
             
             if (to_update.Count > 0) {
-                Console.WriteLine ("Packages that need updating in Factory:");
+                Console.WriteLine ("Packages that need updating in Factory ({0}):", to_update.Count);
                 foreach (var package in to_update) {
                     Console.WriteLine ("  - {0} ({1}, {2})", package.Name, package.Project, package.SrcMd5);
                 }
             }
             
             if (to_remove.Count > 0) {
-                Console.WriteLine ("Packages that need removing from Factory:");
+                Console.WriteLine ("Packages not in a devel project ({0}):", to_remove.Count);
                 foreach (var package in to_remove) {
                     Console.WriteLine ("  - {0}", package.Name);
                 }
             }
         }
         
-        private static void LoadPackages (Dictionary<string, Package> packages, params string [] projects)
+        private static void LoadPackages (Dictionary<string, Package> packages, string project)
         {
-            foreach (var project in projects) {
-                var doc = XDocument.Load (XmlReader.Create (api.Get ("/source/" + project)));
-                foreach (var package in 
-                    from entry in doc.Descendants ("entry")
-                    select (string)entry.Attribute ("name")) {
-                    packages.Add (package, new Package () {
-                        Project = project,
-                        Name = package
-                    });
-                }
+            var account = accounts.DefaultAccount;
+            if (project.StartsWith ("http:") || project.StartsWith ("https:")) {
+                string api = project.Substring (0, project.LastIndexOf ("/"));
+                project = project.Substring (api.Length + 1);
+                account = accounts[api];
+            }
+
+            var doc = XDocument.Load (XmlReader.Create (account.ApiRequest.Get ("/source/" + project)));
+            foreach (var package in 
+                from entry in doc.Descendants ("entry")
+                select (string)entry.Attribute ("name")) {
+                packages.Add (package, new Package () {
+                    Project = project,
+                    Name = package,
+                    Account = account
+                });
             }
         }
         
         private static string GetPackageCurrentRevision (Package package)
         {
-            return (from rev in XDocument.Load (XmlReader.Create (api.Get (
+            return (from rev in XDocument.Load (XmlReader.Create (package.Account.ApiRequest.Get (
                 "/source/" + package.Project + "/" + package.Name + "/_history"))).Descendants ("revision")
                 orderby (int)rev.Attribute ("rev") descending
                 select (string)rev.Element ("srcmd5")).First ();
