@@ -1,0 +1,5 @@
+*.user*
+*.pidb
+*.mdb
+*.exe
+bin/

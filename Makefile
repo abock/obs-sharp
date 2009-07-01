@@ -6,11 +6,11 @@ REFERENCES = $(addprefix -r:, $(shell xpath /Project/ItemGroup/Reference/@Includ
 
 $(ASSEMBLY): $(SOURCES)
 	mkdir -p $$(dirname $@)
-	gmcs -out:$@ $(REFERENCES) $(SOURCES)
+	gmcs -debug -out:$@ -nowarn:0618 $(REFERENCES) $(SOURCES)
 
 clean:
-	rm -f $(ASSEMBLY)
+	rm -f $(ASSEMBLY){,.mdb}
 
 run: $(ASSEMBLY)
-	@mono $<
+	@mono --debug $<
 
