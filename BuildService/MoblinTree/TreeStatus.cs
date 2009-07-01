@@ -52,7 +52,8 @@ namespace MoblinTree
                 Account = new OscRcAccountCollection ().DefaultAccount
             };
             
-            Console.Write ("\rLoading revision data... ");
+            Console.Error.Write ("\r");
+            Console.Write ("Loading revision data... ");
             
             var devel_packages = new Dictionary<string, Package> ();
             var factory_packages = new Dictionary<string, Package> ();
@@ -72,14 +73,49 @@ namespace MoblinTree
                 }
             }
             
-            Console.WriteLine ();
-            Console.WriteLine ("Loaded revision data.");
+            var to_update = new List<Package> ();
+            var to_remove = new List<Package> ();
             
             // Find packages that are not up-to-date in Moblin:Factory
             foreach (var package in devel_packages.Values) {
                 if (!factory_packages.ContainsKey (package.Name) || 
                     factory_packages[package.Name].SrcMd5 != package.SrcMd5) {
-                    Console.WriteLine (package.Name);
+                    to_update.Add (package);
+                }
+            }
+            
+            to_update.Sort ((a, b) => 
+                a.Project == b.Project 
+                    ? a.Name.CompareTo (b.Name)
+                    : a.Project.CompareTo (b.Project));
+            
+            // Find packages that are obsolete in Moblin:Factory
+            foreach (var package in factory_packages.Values) {
+                if (!devel_packages.ContainsKey (package.Name)) {
+                    to_remove.Add (package);
+                }
+            }
+            
+            Console.WriteLine ();
+            Console.WriteLine ("Loaded revision data.");
+            Console.WriteLine ();
+            
+            if (to_update.Count == 0 && to_remove.Count == 0) {
+                Console.WriteLine ("The Factory project is up-to-date. Congratulations!");
+                return;
+            }
+            
+            if (to_update.Count > 0) {
+                Console.WriteLine ("Packages that need updating in Factory:");
+                foreach (var package in to_update) {
+                    Console.WriteLine ("  - {0} ({1}, {2})", package.Name, package.Project, package.SrcMd5);
+                }
+            }
+            
+            if (to_remove.Count > 0) {
+                Console.WriteLine ("Packages that need removing from Factory:");
+                foreach (var package in to_remove) {
+                    Console.WriteLine ("  - {0}", package.Name);
                 }
             }
         }
