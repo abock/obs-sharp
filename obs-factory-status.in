@@ -1,0 +1,2 @@
+#!/bin/bash
+mono --debug @PKGDATADIR@/obs-factory-status.exe "$@"
